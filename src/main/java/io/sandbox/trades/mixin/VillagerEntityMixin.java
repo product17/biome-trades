@@ -25,6 +25,7 @@ import net.minecraft.entity.passive.MerchantEntity;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.text.Text;
 import net.minecraft.village.TradeOffer;
 import net.minecraft.village.TradeOfferList;
@@ -123,6 +124,18 @@ public abstract class VillagerEntityMixin extends MerchantEntity implements Vill
           item.setCustomName(Text.of("Increase Merchant Level"));
           // Add the trade as the last one
           int neededExpToLevel = VillagerEntityMixin.MerchExpRanges[merchantLevel - 1]; // This should not be out of range as it will not fire at level 5
+
+          // Strip the exp from the other purchases
+          for (int i = 0; i < tradeOfferList.size(); i++) {
+            TradeOffer trade = tradeOfferList.get(i);
+            if (trade.getMerchantExperience() > 0) {
+              // merchantExperience is private and has no updater
+              // So... we convert to nbt data, update that and then create a new TradeOffer
+              NbtCompound nbt = trade.toNbt();
+              nbt.putInt("xp", 0);
+              tradeOfferList.set(i, new TradeOffer(nbt));
+            }
+          }
           tradeOfferList.add(new TradeOffer(priceItem, item, 1, neededExpToLevel, 0.0F));
         }
       }
@@ -187,7 +200,7 @@ public abstract class VillagerEntityMixin extends MerchantEntity implements Vill
         tradeOfferList.add(new TradeOffer(item, newSellItem, 0, 0, 0.0F));
       }
     } else {
-      tradeOfferList.add(new TradeOffer(new ItemStack(Items.EMERALD, this.random.nextInt(59) + 5), new ItemStack(Items.BOOK), newSellItem, 12, 1, 0.2F));
+      tradeOfferList.add(new TradeOffer(new ItemStack(Items.EMERALD, this.random.nextInt(59) + 5), new ItemStack(Items.BOOK), newSellItem, 12, 0, 0.2F));
     }
   }
 
