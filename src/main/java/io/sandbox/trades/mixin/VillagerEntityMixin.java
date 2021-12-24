@@ -78,6 +78,8 @@ public abstract class VillagerEntityMixin extends MerchantEntity implements Vill
           Enchantment enchant = enchantList[this.random.nextInt(enchantList.length)];
           this.fillEnchantOffers(tradeOfferList, factorys, 2, enchant, 1);
         } else {
+          // I think the Client calls this without data... and breaks it
+          // So let's ignore those calls
           if (tradeOfferList.size() == 0) {
             return;
           }
