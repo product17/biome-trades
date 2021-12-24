@@ -125,7 +125,7 @@ public abstract class VillagerEntityMixin extends MerchantEntity implements Vill
           // Add the trade as the last one
           int neededExpToLevel = VillagerEntityMixin.MerchExpRanges[merchantLevel - 1]; // This should not be out of range as it will not fire at level 5
 
-          // Strip the exp from the other purchases
+          // Strip the exp from the other TradeOffers
           for (int i = 0; i < tradeOfferList.size(); i++) {
             TradeOffer trade = tradeOfferList.get(i);
             if (trade.getMerchantExperience() > 0) {
@@ -136,6 +136,8 @@ public abstract class VillagerEntityMixin extends MerchantEntity implements Vill
               tradeOfferList.set(i, new TradeOffer(nbt));
             }
           }
+
+          // Add the levelup trade
           tradeOfferList.add(new TradeOffer(priceItem, item, 1, neededExpToLevel, 0.0F));
         }
       }
