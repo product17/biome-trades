@@ -40,6 +40,13 @@ import net.minecraft.world.World;
 public abstract class VillagerEntityMixin extends MerchantEntity implements VillagerDataContainer {
   @Shadow public abstract VillagerData getVillagerData();
 
+  private static int[] MerchExpRanges = {
+    10,
+    70,
+    150,
+    250,
+  };
+
   public VillagerEntityMixin(EntityType<? extends MerchantEntity> entityType, World world) {
     super(entityType, world);
     throw new IllegalStateException("VillagerEntityMixin's dummy constructor called! ");
@@ -59,23 +66,34 @@ public abstract class VillagerEntityMixin extends MerchantEntity implements Vill
 
       // Get current trades
       TradeOfferList tradeOfferList = this.getOffers();
-      
+
       if (villagerData.getProfession() != VillagerProfession.LIBRARIAN) {
         this.fillRecipesFromPool(tradeOfferList, factorys, 2);
       } else {
-        if (villagerData.getLevel() == 1) {
+        int merchantLevel = villagerData.getLevel();
+        if (merchantLevel == 1) {
           // Pass biome specific enchant
           Map<VillagerType, Enchantment[]> biomeMaps = TradeFactories.PROFESSION_BIOME_TRADES.get(villagerData.getProfession());
           Enchantment[] enchantList = biomeMaps.get(villagerData.getType());
           Enchantment enchant = enchantList[this.random.nextInt(enchantList.length)];
           this.fillEnchantOffers(tradeOfferList, factorys, 2, enchant, 1);
         } else {
+          if (tradeOfferList.size() == 0) {
+            return;
+          }
+          // The last trade should always be the leveing trade
+          // Remove this trade, it's the previous level's leveling trade
+          // We can add the next level increase trade
+          if (tradeOfferList.size() > 0) {
+            tradeOfferList.remove(tradeOfferList.size() - 1);
+          }
+
           // Remove any books
           factorys = Arrays.stream(factorys).filter(factory -> {
             TradeOffer tradeOffer = factory.create(this, this.random);
             return tradeOffer.getSellItem().getItem() != Items.ENCHANTED_BOOK;
           }).toArray(Factory[]::new);
-
+          
           // Otherwise we we care if level 1 has a book
           ItemStack firstTrade = tradeOfferList.get(0).getSellItem();
           ItemStack secondTrade = tradeOfferList.get(1).getSellItem();
@@ -88,10 +106,22 @@ public abstract class VillagerEntityMixin extends MerchantEntity implements Vill
           }
 
           if (enchant != null) {
-            this.fillEnchantOffers(tradeOfferList, factorys, 2, enchant, villagerData.getLevel());
+            this.fillEnchantOffers(tradeOfferList, factorys, 2, enchant, merchantLevel);
           } else {
             this.fillRecipesFromPool(tradeOfferList, factorys, 2);
           }
+        }
+
+        if (merchantLevel < 5 && merchantLevel > 0) { // if not max level
+          ItemStack priceItem = new ItemStack(
+            Items.DIAMOND,
+            (int)Math.pow(2, merchantLevel) // 2,4,8,16 should be the progression
+          );
+          ItemStack item = new ItemStack(Items.FLOWER_BANNER_PATTERN);
+          item.setCustomName(Text.of("Increase Merchant Level"));
+          // Add the trade as the last one
+          int neededExpToLevel = VillagerEntityMixin.MerchExpRanges[merchantLevel - 1]; // This should not be out of range as it will not fire at level 5
+          tradeOfferList.add(new TradeOffer(priceItem, item, 1, neededExpToLevel, 0.0F));
         }
       }
     }
