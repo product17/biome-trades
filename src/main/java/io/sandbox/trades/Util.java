@@ -15,6 +15,6 @@ public class Util {
   }
 
   public static Identifier id(String name) {
-      return new Identifier(MOD_ID, name);
+    return new Identifier(MOD_ID, name);
   }
 }
