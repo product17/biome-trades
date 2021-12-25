@@ -47,39 +47,63 @@ public abstract class VillagerEntityMixin extends MerchantEntity implements Vill
   @Shadow public abstract VillagerData getVillagerData();
   @Shadow private void sayNo(){};
 
+  public BlockPos spawnPos;
   private static int[] MerchExpRanges = {
     10,
     70,
     150,
     250,
   };
-  private static HashMap<UUID, BlockPos> villagerSpawnPoints = new HashMap<UUID, BlockPos>();
 
   public VillagerEntityMixin(EntityType<? extends MerchantEntity> entityType, World world) {
     super(entityType, world);
     throw new IllegalStateException("VillagerEntityMixin's dummy constructor called!");
   }
 
+  @Inject(method = "writeCustomDataToNbt", at = @At("RETURN"))
+  private void writeCustomDataToNbt(NbtCompound nbt, CallbackInfo cbi) {
+    if (this.spawnPos == null) {
+      System.out.println("Villager Spawn Position was NULL on NBT write, backfilling with current position...");
+      this.spawnPos = this.getBlockPos();
+    }
+
+    nbt.putInt("spawnX", this.spawnPos.getX());
+    nbt.putInt("spawnY", this.spawnPos.getY());
+    nbt.putInt("spawnZ", this.spawnPos.getZ());
+  }
+
+  @Inject(method = "readCustomDataFromNbt", at = @At("RETURN"))
+  private void readCustomDataFromNbt(NbtCompound nbt, CallbackInfo cbi) {
+    if (!nbt.contains("spawnX") || !nbt.contains("spawnY") || !nbt.contains("spawnZ")) {
+      System.out.println("Villager Spawn Position was missing or incomplete on NBT read, backfilling with current position...");
+      this.spawnPos = this.getBlockPos();
+      return;
+    }
+
+    this.spawnPos = new BlockPos(nbt.getInt("spawnX"), nbt.getInt("spawnY"), nbt.getInt("spawnZ"));
+  }
+
   @Inject(at = @At("HEAD"), method = "initialize")
   private void initialize(CallbackInfoReturnable<EntityData> cbir) {
-    villagerSpawnPoints.put(this.getUuid(), this.getBlockPos());
+    this.spawnPos = this.getBlockPos();
   }
 
   // Helper that determines if a villager can be interacted with due to it being away from its village.
   private boolean getIsOutOfBounds() {
-    BlockPos spawnPos = villagerSpawnPoints.get(this.getUuid());
-    if (spawnPos == null) { return false; } // safety net for previously spawned villagers
+    // Not sure what it is, but there's a second call here during interaction that always has spawnPos as null for some reason.
+    // Let's just return false in that circumstance.
+    if (this.spawnPos == null) { return false; }
 
     BlockPos currentPos = this.getBlockPos();
-    if (Math.abs(currentPos.getX() - spawnPos.getX()) > 100) {
+    if (Math.abs(currentPos.getX() - this.spawnPos.getX()) > 100) {
       return true;
     }
 
-    if (Math.abs(currentPos.getZ() - spawnPos.getZ()) > 100) {
+    if (Math.abs(currentPos.getZ() - this.spawnPos.getZ()) > 100) {
       return true;
     }
 
-    if (Math.abs(currentPos.getY() - spawnPos.getY()) > 25) {
+    if (Math.abs(currentPos.getY() - this.spawnPos.getY()) > 25) {
       return true;
     }
 
