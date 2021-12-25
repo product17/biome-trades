@@ -7,6 +7,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import com.google.common.collect.Sets;
 
@@ -15,18 +16,23 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import io.sandbox.trades.TradeFactories;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnchantmentHelper;
+import net.minecraft.entity.EntityData;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.passive.MerchantEntity;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
+import net.minecraft.util.ActionResult;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.village.TradeOffer;
 import net.minecraft.village.TradeOfferList;
 import net.minecraft.village.TradeOffers;
@@ -40,6 +46,7 @@ import net.minecraft.world.World;
 @Mixin(VillagerEntity.class)
 public abstract class VillagerEntityMixin extends MerchantEntity implements VillagerDataContainer {
   @Shadow public abstract VillagerData getVillagerData();
+  @Shadow private void sayNo(){};
 
   private static int[] MerchExpRanges = {
     10,
@@ -47,10 +54,53 @@ public abstract class VillagerEntityMixin extends MerchantEntity implements Vill
     150,
     250,
   };
+  private static HashMap<UUID, BlockPos> villagerSpawnPoints = new HashMap<UUID, BlockPos>();
 
   public VillagerEntityMixin(EntityType<? extends MerchantEntity> entityType, World world) {
     super(entityType, world);
-    throw new IllegalStateException("VillagerEntityMixin's dummy constructor called! ");
+    throw new IllegalStateException("VillagerEntityMixin's dummy constructor called!");
+  }
+
+  @Inject(at = @At("HEAD"), method = "initialize")
+  private void initialize(CallbackInfoReturnable<EntityData> cbir) {
+    villagerSpawnPoints.put(this.getUuid(), this.getBlockPos());
+  }
+
+  // Helper that determines if a villager can be interacted with due to it being away from its village.
+  private boolean getIsOutOfBounds() {
+    BlockPos spawnPos = villagerSpawnPoints.get(this.getUuid());
+    if (spawnPos == null) { return false; } // safety net for previously spawned villagers
+
+    BlockPos currentPos = this.getBlockPos();
+    if (Math.abs(currentPos.getX() - spawnPos.getX()) > 100) {
+      return true;
+    }
+
+    if (Math.abs(currentPos.getZ() - spawnPos.getZ()) > 100) {
+      return true;
+    }
+
+    if (Math.abs(currentPos.getY() - spawnPos.getY()) > 25) {
+      return true;
+    }
+
+    return false;
+  }
+
+  @Inject(at = @At("HEAD"), method = "canBreed")
+  private void canBreed(CallbackInfoReturnable<Boolean> cbir) {
+    if (this.getIsOutOfBounds()) {
+      cbir.setReturnValue(false);
+    }
+  }
+
+  @Inject(at = @At("HEAD"), method = "interactMob", cancellable = true)
+  private void interactMob(CallbackInfoReturnable<ActionResult> cbir) {
+    if (this.getIsOutOfBounds()) {
+      this.sayNo();
+      cbir.setReturnValue(ActionResult.success(this.world.isClient));
+      cbir.cancel();
+    }
   }
 
   @Inject(at = @At("HEAD"), method = "fillRecipes", cancellable = true)
