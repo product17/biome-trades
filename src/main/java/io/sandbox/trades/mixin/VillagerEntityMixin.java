@@ -59,7 +59,6 @@ public abstract class VillagerEntityMixin extends MerchantEntity implements Vill
   public VillagerEntityMixin(EntityType<? extends MerchantEntity> entityType, World world) {
     super(entityType, world);
     throw new IllegalStateException("VillagerEntityMixin's dummy constructor called!");
-<<<<<<< Updated upstream
   }
 
   @Inject(method = "writeCustomDataToNbt", at = @At("RETURN"))
@@ -92,8 +91,7 @@ public abstract class VillagerEntityMixin extends MerchantEntity implements Vill
 
   // Helper that determines if a villager can be interacted with due to it being away from its village.
   private boolean getIsOutOfBounds() {
-    // Not sure what it is, but there's a second call here during interaction that always has spawnPos as null for some reason.
-    // Let's just return false in that circumstance.
+    // This prevents the Client call that has spawnPos set to null and weird scenarios...
     if (this.spawnPos == null) { return false; }
 
     BlockPos currentPos = this.getBlockPos();
@@ -126,8 +124,6 @@ public abstract class VillagerEntityMixin extends MerchantEntity implements Vill
       cbir.setReturnValue(ActionResult.success(this.world.isClient));
       cbir.cancel();
     }
-=======
->>>>>>> Stashed changes
   }
 
   @Inject(at = @At("HEAD"), method = "fillRecipes", cancellable = true)
@@ -220,12 +216,6 @@ public abstract class VillagerEntityMixin extends MerchantEntity implements Vill
     }
     cb.cancel();
   }
-
-  // @Inject(at = @At("TAIL"), method = "afterUsing", cancellable = true)
-  // protected void afterUsing(CallbackInfo cb) {
-  //   // cb.
-  //   System.out.println("Trade has been made: ");
-  // }
 
   public void fillEnchantOffers(TradeOfferList tradeOfferList, Factory[] factorys, int count, Enchantment enchant, int merchantLevel) {
     Factory[] factories = this.resizeFactoryList(factorys, count);
