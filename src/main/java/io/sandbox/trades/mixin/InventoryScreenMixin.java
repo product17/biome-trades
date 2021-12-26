@@ -23,11 +23,12 @@ public class InventoryScreenMixin {
     if (!player.world.isClient && IncreaseLevel.waitingForTick.size() > 0 && IncreaseLevel.waitingForTick.get(player.getUuid())) {
       ItemStack itemStack = this.player.currentScreenHandler.getCursorStack();
 
+      // It should only be an IncreaseLevel item... but double checking
       if (itemStack.getItem() instanceof IncreaseLevel) {
-        System.out.println("Items to remove slot: " + itemStack.getItem());
         itemStack.setCount(0);
       }
 
+      // just always clear the player to prevent leaving this open
       IncreaseLevel.waitingForTick.put(player.getUuid(), false);
     }
 	}

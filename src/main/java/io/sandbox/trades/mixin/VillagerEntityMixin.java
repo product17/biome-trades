@@ -18,6 +18,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import io.sandbox.trades.TradeFactories;
+import io.sandbox.trades.items.IncreaseLevel;
 import io.sandbox.trades.items.ItemLoader;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import net.minecraft.enchantment.Enchantment;
@@ -129,90 +130,116 @@ public abstract class VillagerEntityMixin extends MerchantEntity implements Vill
   protected void fillRecipes(CallbackInfo cb) {
     VillagerData villagerData = this.getVillagerData();
     Int2ObjectMap<Factory[]> int2ObjectMap = (Int2ObjectMap<Factory[]>)TradeOffers.PROFESSION_TO_LEVELED_TRADE.get(villagerData.getProfession());
-    if (int2ObjectMap != null && !int2ObjectMap.isEmpty()) {
-      // Default Trades...
-      Factory[] factorys = (Factory[])int2ObjectMap.get(villagerData.getLevel());
-      if (factorys == null) {
-        return;
+    if (int2ObjectMap == null || int2ObjectMap.isEmpty()) {
+      return;
+    }
+
+    // Default Trades...
+    Factory[] factorys = (Factory[])int2ObjectMap.get(villagerData.getLevel());
+    if (factorys == null) {
+      return;
+    }
+
+    // Get current trades
+    TradeOfferList tradeOfferList = this.getOffers();
+    int merchantLevel = villagerData.getLevel();
+
+    // The last trade should always be the leveing trade
+    // Remove this trade, it's the previous level's leveling trade
+    // We can add the next level increase trade
+    if (tradeOfferList.size() > 0) {
+      int increaseLevelTrade = -1;
+      for (int i = 0; i < tradeOfferList.size(); i++) {
+        TradeOffer trade = tradeOfferList.get(i);
+        ItemStack sellItem = trade.getSellItem();
+        // System.out.println("Item List: " + sellItem.getItem());
+        if (sellItem.getItem() instanceof IncreaseLevel) {
+          // only remove IncreaseLevel trades
+          increaseLevelTrade = i;
+        }
       }
 
-      // Get current trades
-      TradeOfferList tradeOfferList = this.getOffers();
-
-      if (villagerData.getProfession() != VillagerProfession.LIBRARIAN) {
-        this.fillRecipesFromPool(tradeOfferList, factorys, 2);
-      } else {
-        int merchantLevel = villagerData.getLevel();
-        if (merchantLevel == 1) {
-          // Pass biome specific enchant
-          Map<VillagerType, Enchantment[]> biomeMaps = TradeFactories.PROFESSION_BIOME_TRADES.get(villagerData.getProfession());
-          Enchantment[] enchantList = biomeMaps.get(villagerData.getType());
-          Enchantment enchant = enchantList[this.random.nextInt(enchantList.length)];
-          this.fillEnchantOffers(tradeOfferList, factorys, 2, enchant, 1);
-        } else {
-          // I think the Client calls this without data... and breaks it
-          // So let's ignore those calls
-          if (tradeOfferList.size() == 0) {
-            return;
-          }
-          // The last trade should always be the leveing trade
-          // Remove this trade, it's the previous level's leveling trade
-          // We can add the next level increase trade
-          if (tradeOfferList.size() > 0) {
-            tradeOfferList.remove(tradeOfferList.size() - 1);
-          }
-
-          // Remove any books
-          factorys = Arrays.stream(factorys).filter(factory -> {
-            TradeOffer tradeOffer = factory.create(this, this.random);
-            return tradeOffer.getSellItem().getItem() != Items.ENCHANTED_BOOK;
-          }).toArray(Factory[]::new);
-          
-          // Otherwise we we care if level 1 has a book
-          ItemStack firstTrade = tradeOfferList.get(0).getSellItem();
-          ItemStack secondTrade = tradeOfferList.get(1).getSellItem();
-          Enchantment enchant = null;
-  
-          if (firstTrade.getItem() == Items.ENCHANTED_BOOK) {
-            enchant = EnchantmentHelper.get(firstTrade).keySet().iterator().next(); // just grab the first item
-          } else if (secondTrade.getItem() == Items.ENCHANTED_BOOK) {
-            enchant = EnchantmentHelper.get(secondTrade).keySet().iterator().next(); // just grab the first item
-          }
-
-          if (enchant != null) {
-            this.fillEnchantOffers(tradeOfferList, factorys, 2, enchant, merchantLevel);
-          } else {
-            this.fillRecipesFromPool(tradeOfferList, factorys, 2);
-          }
-        }
-
-        if (merchantLevel < 5 && merchantLevel > 0) { // if not max level
-          ItemStack priceItem = new ItemStack(
-            Items.DIAMOND,
-            (int)Math.pow(2, merchantLevel) // 2,4,8,16 should be the progression
-          );
-          ItemStack item = new ItemStack(ItemLoader.INCREASE_LEVEL);
-          item.setCustomName(Text.of("Increase Merchant Level"));
-          // Add the trade as the last one
-          int neededExpToLevel = VillagerEntityMixin.MerchExpRanges[merchantLevel - 1]; // This should not be out of range as it will not fire at level 5
-          
-          // Strip the exp from the other TradeOffers
-          for (int i = 0; i < tradeOfferList.size(); i++) {
-            TradeOffer trade = tradeOfferList.get(i);
-            if (trade.getMerchantExperience() > 0) {
-              // merchantExperience is private and has no updater
-              // So... we convert to nbt data, update that and then create a new TradeOffer
-              NbtCompound nbt = trade.toNbt();
-              nbt.putInt("xp", 0);
-              tradeOfferList.set(i, new TradeOffer(nbt));
-            }
-          }
-
-          // Add the levelup trade
-          tradeOfferList.add(new TradeOffer(priceItem, item, 1, neededExpToLevel, 0.0F));
-        }
+      if (increaseLevelTrade >= 0) {
+        tradeOfferList.remove(increaseLevelTrade);
       }
     }
+
+    if (villagerData.getProfession() != VillagerProfession.LIBRARIAN) {
+      this.fillRecipesFromPool(tradeOfferList, factorys, 2);
+      for (int i = 0; i < tradeOfferList.size(); i++) {
+        TradeOffer trade = tradeOfferList.get(i);
+        ItemStack sellItem = trade.getSellItem();
+        System.out.println("Item List: " + sellItem.getItem());
+      }
+    } else {
+      if (merchantLevel == 1) {
+        // Pass biome specific enchant
+        Map<VillagerType, Enchantment[]> biomeMaps = TradeFactories.PROFESSION_BIOME_TRADES.get(villagerData.getProfession());
+        Enchantment[] enchantList = biomeMaps.get(villagerData.getType());
+        Enchantment enchant = enchantList[this.random.nextInt(enchantList.length)];
+        this.fillEnchantOffers(tradeOfferList, factorys, 2, enchant, 1);
+      } else {
+        // I think the Client calls this without data... and breaks it
+        // So let's ignore those calls
+        if (tradeOfferList.size() == 0) {
+          cb.cancel();
+          return;
+        }
+
+        // Remove any books
+        factorys = Arrays.stream(factorys).filter(factory -> {
+          TradeOffer tradeOffer = factory.create(this, this.random);
+          return tradeOffer.getSellItem().getItem() != Items.ENCHANTED_BOOK;
+        }).toArray(Factory[]::new);
+        
+        // Otherwise we we care if level 1 has a book
+        ItemStack firstTrade = tradeOfferList.get(0).getSellItem();
+        ItemStack secondTrade = tradeOfferList.get(1).getSellItem();
+        Enchantment enchant = null;
+
+        if (firstTrade.getItem() == Items.ENCHANTED_BOOK) {
+          enchant = EnchantmentHelper.get(firstTrade).keySet().iterator().next(); // just grab the first item
+        } else if (secondTrade.getItem() == Items.ENCHANTED_BOOK) {
+          enchant = EnchantmentHelper.get(secondTrade).keySet().iterator().next(); // just grab the first item
+        }
+
+        if (enchant != null) {
+          this.fillEnchantOffers(tradeOfferList, factorys, 2, enchant, merchantLevel);
+        } else {
+          this.fillRecipesFromPool(tradeOfferList, factorys, 2);
+        }
+      }
+
+    }
+
+    if (merchantLevel < 5 && merchantLevel > 0) { // if not max level
+      ItemStack priceItem = new ItemStack(
+        Items.DIAMOND,
+        (int)Math.pow(2, merchantLevel) // 2,4,8,16 should be the progression
+      );
+      ItemStack item = new ItemStack(ItemLoader.INCREASE_LEVEL);
+      item.setCustomName(Text.of("Increase Merchant Level"));
+      // Add the trade as the last one
+      int neededExpToLevel = VillagerEntityMixin.MerchExpRanges[merchantLevel - 1]; // This should not be out of range as it will not fire at level 5
+      
+      // Strip the exp from the other TradeOffers
+      for (int i = 0; i < tradeOfferList.size(); i++) {
+        TradeOffer trade = tradeOfferList.get(i);
+        if (trade.getMerchantExperience() > 0) {
+          // merchantExperience is private and has no updater
+          // So... we convert to nbt data, update that and then create a new TradeOffer
+          NbtCompound nbt = trade.toNbt();
+          nbt.putInt("xp", 0);
+          tradeOfferList.set(i, new TradeOffer(nbt));
+        }
+      }
+
+      // Add the levelup trade
+      tradeOfferList.add(new TradeOffer(priceItem, item, 1, neededExpToLevel, 0.0F));
+    }
+
+    // We are basically replacing fillRecipes(), so always cancel
+    // if it makes it this far
     cb.cancel();
   }
 
