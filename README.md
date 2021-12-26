@@ -13,3 +13,4 @@ Librarians can only be leveled via a diamond trade.
 
 1. Remove Leveling item when trade is done
 2. Add Leveling item to all tradeskills
+2. Can villager trades be restricted to generated villages?

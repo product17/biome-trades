@@ -19,6 +19,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import io.sandbox.trades.TradeFactories;
+import io.sandbox.trades.items.ItemLoader;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnchantmentHelper;
@@ -58,6 +59,7 @@ public abstract class VillagerEntityMixin extends MerchantEntity implements Vill
   public VillagerEntityMixin(EntityType<? extends MerchantEntity> entityType, World world) {
     super(entityType, world);
     throw new IllegalStateException("VillagerEntityMixin's dummy constructor called!");
+<<<<<<< Updated upstream
   }
 
   @Inject(method = "writeCustomDataToNbt", at = @At("RETURN"))
@@ -124,6 +126,8 @@ public abstract class VillagerEntityMixin extends MerchantEntity implements Vill
       cbir.setReturnValue(ActionResult.success(this.world.isClient));
       cbir.cancel();
     }
+=======
+>>>>>>> Stashed changes
   }
 
   @Inject(at = @At("HEAD"), method = "fillRecipes", cancellable = true)
@@ -131,7 +135,6 @@ public abstract class VillagerEntityMixin extends MerchantEntity implements Vill
     VillagerData villagerData = this.getVillagerData();
     Int2ObjectMap<Factory[]> int2ObjectMap = (Int2ObjectMap<Factory[]>)TradeOffers.PROFESSION_TO_LEVELED_TRADE.get(villagerData.getProfession());
     if (int2ObjectMap != null && !int2ObjectMap.isEmpty()) {
-
       // Default Trades...
       Factory[] factorys = (Factory[])int2ObjectMap.get(villagerData.getLevel());
       if (factorys == null) {
@@ -193,11 +196,11 @@ public abstract class VillagerEntityMixin extends MerchantEntity implements Vill
             Items.DIAMOND,
             (int)Math.pow(2, merchantLevel) // 2,4,8,16 should be the progression
           );
-          ItemStack item = new ItemStack(Items.FLOWER_BANNER_PATTERN);
+          ItemStack item = new ItemStack(ItemLoader.INCREASE_LEVEL);
           item.setCustomName(Text.of("Increase Merchant Level"));
           // Add the trade as the last one
           int neededExpToLevel = VillagerEntityMixin.MerchExpRanges[merchantLevel - 1]; // This should not be out of range as it will not fire at level 5
-
+          
           // Strip the exp from the other TradeOffers
           for (int i = 0; i < tradeOfferList.size(); i++) {
             TradeOffer trade = tradeOfferList.get(i);
@@ -217,6 +220,12 @@ public abstract class VillagerEntityMixin extends MerchantEntity implements Vill
     }
     cb.cancel();
   }
+
+  // @Inject(at = @At("TAIL"), method = "afterUsing", cancellable = true)
+  // protected void afterUsing(CallbackInfo cb) {
+  //   // cb.
+  //   System.out.println("Trade has been made: ");
+  // }
 
   public void fillEnchantOffers(TradeOfferList tradeOfferList, Factory[] factorys, int count, Enchantment enchant, int merchantLevel) {
     Factory[] factories = this.resizeFactoryList(factorys, count);
