@@ -110,7 +110,7 @@ public abstract class VillagerEntityMixin extends MerchantEntity implements Vill
     return false;
   }
 
-  @Inject(at = @At("HEAD"), method = "canBreed")
+  @Inject(at = @At("HEAD"), method = "canBreed", cancellable = true)
   private void canBreed(CallbackInfoReturnable<Boolean> cbir) {
     if (this.getIsOutOfBounds()) {
       cbir.setReturnValue(false);
