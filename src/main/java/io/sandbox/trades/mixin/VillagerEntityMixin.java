@@ -215,7 +215,7 @@ public abstract class VillagerEntityMixin extends MerchantEntity implements Vill
     if (merchantLevel < 5 && merchantLevel > 0) { // if not max level
       ItemStack priceItem = new ItemStack(
         Items.DIAMOND,
-        (int)Math.pow(2, merchantLevel) // 2,4,8,16 should be the progression
+        merchantLevel // 1,2,3,4 should be the progression (10 total)
       );
       ItemStack item = new ItemStack(ItemLoader.INCREASE_LEVEL);
       item.setCustomName(Text.of("Increase Merchant Level"));
