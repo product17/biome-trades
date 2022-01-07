@@ -95,15 +95,15 @@ public abstract class VillagerEntityMixin extends MerchantEntity implements Vill
     if (this.spawnPos == null) { return false; }
 
     BlockPos currentPos = this.getBlockPos();
-    if (Math.abs(currentPos.getX() - this.spawnPos.getX()) > 100) {
+    if (Math.abs(currentPos.getX() - this.spawnPos.getX()) > 150) {
       return true;
     }
 
-    if (Math.abs(currentPos.getZ() - this.spawnPos.getZ()) > 100) {
+    if (Math.abs(currentPos.getZ() - this.spawnPos.getZ()) > 150) {
       return true;
     }
 
-    if (Math.abs(currentPos.getY() - this.spawnPos.getY()) > 25) {
+    if (Math.abs(currentPos.getY() - this.spawnPos.getY()) > 100) {
       return true;
     }
 
