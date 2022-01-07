@@ -79,6 +79,10 @@ public abstract class VillagerEntityMixin extends MerchantEntity implements Vill
       System.out.println("Villager Spawn Position was missing or incomplete on NBT read, backfilling with current position...");
       this.spawnPos = this.getBlockPos();
       return;
+    } else if (nbt.getInt("spawnX") == 0 && nbt.getInt("spawnY") == 0 && nbt.getInt("spawnZ") == 0) {
+      System.out.println("Villager Spawn Position was set to 0, 0, 0 which is assumed to be invalid. Backfilling with current position...");
+      this.spawnPos = this.getBlockPos();
+      return;
     }
 
     this.spawnPos = new BlockPos(nbt.getInt("spawnX"), nbt.getInt("spawnY"), nbt.getInt("spawnZ"));
@@ -121,6 +125,7 @@ public abstract class VillagerEntityMixin extends MerchantEntity implements Vill
   private void interactMob(CallbackInfoReturnable<ActionResult> cbir) {
     if (this.getIsOutOfBounds()) {
       this.sayNo();
+      System.out.println("SPAWN: " + this.spawnPos.toShortString());
       cbir.setReturnValue(ActionResult.success(this.world.isClient));
       cbir.cancel();
     }
@@ -152,7 +157,6 @@ public abstract class VillagerEntityMixin extends MerchantEntity implements Vill
       for (int i = 0; i < tradeOfferList.size(); i++) {
         TradeOffer trade = tradeOfferList.get(i);
         ItemStack sellItem = trade.getSellItem();
-        // System.out.println("Item List: " + sellItem.getItem());
         if (sellItem.getItem() instanceof IncreaseLevel) {
           // only remove IncreaseLevel trades
           increaseLevelTrade = i;
@@ -166,11 +170,6 @@ public abstract class VillagerEntityMixin extends MerchantEntity implements Vill
 
     if (villagerData.getProfession() != VillagerProfession.LIBRARIAN) {
       this.fillRecipesFromPool(tradeOfferList, factorys, 2);
-      for (int i = 0; i < tradeOfferList.size(); i++) {
-        TradeOffer trade = tradeOfferList.get(i);
-        ItemStack sellItem = trade.getSellItem();
-        System.out.println("Item List: " + sellItem.getItem());
-      }
     } else {
       if (merchantLevel == 1) {
         // Pass biome specific enchant
