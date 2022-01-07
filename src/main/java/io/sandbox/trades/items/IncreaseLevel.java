@@ -1,8 +1,6 @@
 package io.sandbox.trades.items;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.UUID;
 
 import net.minecraft.entity.player.PlayerEntity;
@@ -18,7 +16,6 @@ public class IncreaseLevel extends Item {
 
   public IncreaseLevel(Settings settings) {
     super(settings);
-    //TODO Auto-generated constructor stub
   }
 
   @Override

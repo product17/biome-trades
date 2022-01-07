@@ -27,7 +27,7 @@ public class TradeFactories {
         Enchantments.FLAME,
         Enchantments.KNOCKBACK,
         Enchantments.LOOTING,
-        Enchantments.UNBREAKING,
+        Enchantments.UNBREAKING
       });
       put(VillagerType.PLAINS, new Enchantment[]{
         Enchantments.CHANNELING,
@@ -39,7 +39,7 @@ public class TradeFactories {
         Enchantments.INFINITY,
         Enchantments.PUNCH,
         Enchantments.LURE,
-        Enchantments.LUCK_OF_THE_SEA,
+        Enchantments.LUCK_OF_THE_SEA
       });
       put(VillagerType.SAVANNA, new Enchantment[]{
         Enchantments.PROJECTILE_PROTECTION,
@@ -48,14 +48,14 @@ public class TradeFactories {
         Enchantments.MULTISHOT,
         Enchantments.QUICK_CHARGE,
         Enchantments.PIERCING,
-        Enchantments.MENDING,
+        Enchantments.MENDING
       });
       put(VillagerType.SNOW, new Enchantment[]{
         Enchantments.AQUA_AFFINITY,
         Enchantments.RESPIRATION,
         Enchantments.DEPTH_STRIDER,
         Enchantments.FROST_WALKER,
-        Enchantments.SMITE,
+        Enchantments.SMITE
       });
       put(VillagerType.TAIGA, new Enchantment[]{
         Enchantments.PROTECTION,
@@ -64,7 +64,7 @@ public class TradeFactories {
         Enchantments.FORTUNE,
         Enchantments.SILK_TOUCH,
         Enchantments.FEATHER_FALLING,
-        Enchantments.THORNS,
+        Enchantments.THORNS
       });
     }});
   }};
