@@ -4,7 +4,7 @@
   "version": "${version}",
 
   "name": "Biome Trades",
-  "description": "",
+  "description": "Restricts villagers to their spawn village, redefines how they level, and restricts enchanting books to certain biomes.",
   "authors": [
     "Brent Crocker",
     "Tyler Crocker"
