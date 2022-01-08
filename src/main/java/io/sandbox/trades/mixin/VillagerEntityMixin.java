@@ -25,11 +25,14 @@ import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.EntityData;
 import net.minecraft.entity.EntityType;
+import net.minecraft.entity.SpawnReason;
 import net.minecraft.entity.passive.MerchantEntity;
+import net.minecraft.entity.passive.PassiveEntity;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.math.BlockPos;
@@ -88,9 +91,34 @@ public abstract class VillagerEntityMixin extends MerchantEntity implements Vill
     this.spawnPos = new BlockPos(nbt.getInt("spawnX"), nbt.getInt("spawnY"), nbt.getInt("spawnZ"));
   }
 
-  @Inject(at = @At("HEAD"), method = "initialize")
+  private void setSpawnPos(BlockPos pos) {
+    if (pos.getX() == 0 && pos.getY() == 0 && pos.getZ() == 0) { return; }
+
+    this.spawnPos = pos;
+  }
+
+  @Inject(method = "initialize", at = @At("HEAD"))
   private void initialize(CallbackInfoReturnable<EntityData> cbir) {
-    this.spawnPos = this.getBlockPos();
+    this.setSpawnPos(this.getBlockPos());
+  }
+
+  // NOTE : This is a full override of the method. Check this on any major release!!!
+  @Inject(method = "createChild", at = @At("HEAD"), cancellable = true)
+  private void createChild(ServerWorld serverWorld, PassiveEntity passiveEntity, CallbackInfoReturnable<VillagerEntity> cbir) {
+    double d = this.random.nextDouble();
+    VillagerType villagerType;
+    if (d < 0.5D) {
+        villagerType = VillagerType.forBiome(serverWorld.getBiomeKey(this.getBlockPos()));
+    } else if (d < 0.75D) {
+        villagerType = this.getVillagerData().getType();
+    } else {
+        villagerType = ((VillagerEntity)passiveEntity).getVillagerData().getType();
+    }
+
+    VillagerEntity villagerEntity = new VillagerEntity(EntityType.VILLAGER, serverWorld, villagerType);
+    villagerEntity.setPosition(this.getPos());
+    villagerEntity.initialize(serverWorld, serverWorld.getLocalDifficulty(villagerEntity.getBlockPos()), SpawnReason.BREEDING, (EntityData)null, (NbtCompound)null);
+    cbir.setReturnValue(villagerEntity);
   }
 
   // Helper that determines if a villager can be interacted with due to it being away from its village.
@@ -116,16 +144,15 @@ public abstract class VillagerEntityMixin extends MerchantEntity implements Vill
 
   @Inject(at = @At("HEAD"), method = "canBreed", cancellable = true)
   private void canBreed(CallbackInfoReturnable<Boolean> cbir) {
-    if (this.getIsOutOfBounds()) {
-      cbir.setReturnValue(false);
-    }
+    // if (this.getIsOutOfBounds()) {
+    //   cbir.setReturnValue(false);
+    // }
   }
 
   @Inject(at = @At("HEAD"), method = "interactMob", cancellable = true)
   private void interactMob(CallbackInfoReturnable<ActionResult> cbir) {
     if (this.getIsOutOfBounds()) {
       this.sayNo();
-      System.out.println("SPAWN: " + this.spawnPos.toShortString());
       cbir.setReturnValue(ActionResult.success(this.world.isClient));
       cbir.cancel();
     }
