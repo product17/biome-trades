@@ -108,7 +108,7 @@ public abstract class VillagerEntityMixin extends MerchantEntity implements Vill
     double d = this.random.nextDouble();
     VillagerType villagerType;
     if (d < 0.5D) {
-        villagerType = VillagerType.forBiome(serverWorld.getBiomeKey(this.getBlockPos()));
+        villagerType = VillagerType.forBiome(serverWorld.getBiome(this.getBlockPos()));
     } else if (d < 0.75D) {
         villagerType = this.getVillagerData().getType();
     } else {

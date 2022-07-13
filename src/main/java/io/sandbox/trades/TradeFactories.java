@@ -2,7 +2,6 @@ package io.sandbox.trades;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Random;
 
 import net.minecraft.block.Block;
 import net.minecraft.enchantment.Enchantment;
@@ -84,7 +83,8 @@ public class TradeFactories {
       this.multiplier = 0.05F;
     }
 
-    public TradeOffer create(Entity entity, Random random) {
+    @Override
+    public TradeOffer create(Entity entity, net.minecraft.util.math.random.Random random) {
       ItemStack itemStack = new ItemStack(this.buy, this.price);
       return new TradeOffer(itemStack, new ItemStack(Items.EMERALD), this.maxUses, this.experience, this.multiplier);
     }
@@ -123,7 +123,8 @@ public class TradeFactories {
       this.multiplier = multiplier;
     }
 
-    public TradeOffer create(Entity entity, Random random) {
+    @Override
+    public TradeOffer create(Entity entity, net.minecraft.util.math.random.Random random) {
       return new TradeOffer(new ItemStack(Items.EMERALD, this.price), new ItemStack(this.sell.getItem(), this.count),
           this.maxUses, this.experience, this.multiplier);
     }
