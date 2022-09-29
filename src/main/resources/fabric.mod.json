@@ -1,21 +1,21 @@
 {
   "schemaVersion": 1,
-  "id": "trades",
+  "id": "sandbox-trades",
   "version": "${version}",
 
-  "name": "Biome Trades",
+  "name": "Sandbox Trades",
   "description": "Restricts villagers to their spawn village, redefines how they level, and restricts enchanting books to certain biomes.",
   "authors": [
     "Brent Crocker",
     "Tyler Crocker"
   ],
   "contact": {
-    "homepage": "https://fabricmc.net/",
-    "sources": "https://github.com/FabricMC/fabric-example-mod"
+    "homepage": "https://www.sandbox.io/",
+    "sources": "https://github.com/sandbox-mc/sandbox-trades"
   },
 
   "license": "CC0-1.0",
-  "icon": "assets/modid/icon.png",
+  "icon": "assets/sandbox-trades/icon.png",
 
   "environment": "*",
   "entrypoints": {
@@ -31,9 +31,10 @@
     "fabricloader": ">=0.14",
     "fabric": "*",
     "minecraft": "1.19.x",
-    "java": ">=17"
+    "java": ">=17",
+    "sandbox-lib": "*"
   },
   "suggests": {
-    "another-mod": "*"
+    "sandbox-equipment": "*"
   }
 }

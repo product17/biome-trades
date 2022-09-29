@@ -8,7 +8,7 @@ import net.minecraft.util.Identifier;
 import net.minecraft.village.TradeOffers;
 
 public class Util {
-  public static String MOD_ID = "trade";
+  public static String MOD_ID = "sandbox-trades";
 
   public static Int2ObjectMap<TradeOffers.Factory[]> copyToFastUtilMap(ImmutableMap<Integer, TradeOffers.Factory[]> immutableMap) {
     return new Int2ObjectOpenHashMap<TradeOffers.Factory[]>(immutableMap);
