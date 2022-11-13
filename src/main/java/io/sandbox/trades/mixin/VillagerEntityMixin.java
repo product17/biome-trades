@@ -17,7 +17,12 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import io.sandbox.trades.Main;
 import io.sandbox.trades.TradeFactories;
+import io.sandbox.trades.configs.BiomeTradeConfig;
+import io.sandbox.trades.configs.CostItem;
+import io.sandbox.trades.configs.LevelCostConfig;
+import io.sandbox.trades.configs.VillagerConfig;
 import io.sandbox.trades.items.IncreaseLevel;
 import io.sandbox.trades.items.ItemLoader;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -201,7 +206,16 @@ public abstract class VillagerEntityMixin extends MerchantEntity implements Vill
       if (merchantLevel == 1) {
         // Pass biome specific enchant
         Map<VillagerType, Enchantment[]> biomeMaps = TradeFactories.PROFESSION_BIOME_TRADES.get(villagerData.getProfession());
+        VillagerConfig villagerConfig = Main.tradesConfig.getVillagerConfig(villagerData.getProfession().toString());
+        BiomeTradeConfig biomeTradeConfig = null;
         Enchantment[] enchantList = biomeMaps.get(villagerData.getType());
+        if (villagerConfig != null) {
+          biomeTradeConfig = villagerConfig.getBiomeTradeConfig(villagerData.getType().toString());
+          if (biomeTradeConfig != null) {
+            enchantList = biomeTradeConfig.getEnchantments();
+          }
+        }
+
         Enchantment enchant = enchantList[this.random.nextInt(enchantList.length)];
         this.fillEnchantOffers(tradeOfferList, factorys, 2, enchant, 1);
       } else {
@@ -239,29 +253,55 @@ public abstract class VillagerEntityMixin extends MerchantEntity implements Vill
     }
 
     if (merchantLevel < 5 && merchantLevel > 0) { // if not max level
-      ItemStack priceItem = new ItemStack(
-        Items.DIAMOND,
-        merchantLevel // 1,2,3,4 should be the progression (10 total)
-      );
-      ItemStack item = new ItemStack(ItemLoader.INCREASE_LEVEL);
-      item.setCustomName(Text.of("Increase Merchant Level"));
-      // Add the trade as the last one
-      int neededExpToLevel = VillagerEntityMixin.MerchExpRanges[merchantLevel - 1]; // This should not be out of range as it will not fire at level 5
-      
-      // Strip the exp from the other TradeOffers
-      for (int i = 0; i < tradeOfferList.size(); i++) {
-        TradeOffer trade = tradeOfferList.get(i);
-        if (trade.getMerchantExperience() > 0) {
-          // merchantExperience is private and has no updater
-          // So... we convert to nbt data, update that and then create a new TradeOffer
-          NbtCompound nbt = trade.toNbt();
-          nbt.putInt("xp", 0);
-          tradeOfferList.set(i, new TradeOffer(nbt));
+      ItemStack priceItemOne = null;
+      ItemStack priceItemTwo = null;
+      int levelCostIndex = merchantLevel - 1;
+
+      // Check for profession price override
+      VillagerConfig villagerConfig = Main.tradesConfig.getVillagerConfig(villagerData.getProfession().toString());
+      if (villagerConfig != null && villagerConfig.levelCost.length > levelCostIndex) {
+        LevelCostConfig levelCostConfig = villagerConfig.levelCost[levelCostIndex];
+        if (levelCostConfig != null) {
+          priceItemOne = CostItem.getItemStack(levelCostConfig.itemOne);
+          priceItemTwo = CostItem.getItemStack(levelCostConfig.itemTwo);
         }
       }
 
-      // Add the levelup trade
-      tradeOfferList.add(new TradeOffer(priceItem, item, 1, neededExpToLevel, 0.0F));
+      // Check for Default price in config
+      if (priceItemOne == null && Main.tradesConfig.defaultLevelCost.length > levelCostIndex) {
+        LevelCostConfig levelCostConfig = Main.tradesConfig.defaultLevelCost[levelCostIndex];
+        if (levelCostConfig != null) {
+          priceItemOne = CostItem.getItemStack(levelCostConfig.itemOne);
+          priceItemTwo = CostItem.getItemStack(levelCostConfig.itemTwo);
+        }
+      }
+
+      // if no configs are set this should just leave the profession alone
+      if (priceItemOne != null) {
+        ItemStack item = new ItemStack(ItemLoader.INCREASE_LEVEL);
+        item.setCustomName(Text.of("Increase Merchant Level"));
+        // Add the trade as the last one
+        int neededExpToLevel = VillagerEntityMixin.MerchExpRanges[merchantLevel - 1]; // This should not be out of range as it will not fire at level 5
+        
+        // Strip the exp from the other TradeOffers
+        for (int i = 0; i < tradeOfferList.size(); i++) {
+          TradeOffer trade = tradeOfferList.get(i);
+          if (trade.getMerchantExperience() > 0) {
+            // merchantExperience is private and has no updater
+            // So... we convert to nbt data, update that and then create a new TradeOffer... ;)
+            NbtCompound nbt = trade.toNbt();
+            nbt.putInt("xp", 0);
+            tradeOfferList.set(i, new TradeOffer(nbt));
+          }
+        }
+
+        // Add the levelup trade
+        if (priceItemTwo != null) {
+          tradeOfferList.add(new TradeOffer(priceItemOne, priceItemTwo, item, 1, neededExpToLevel, 0.0F));
+        } else {
+          tradeOfferList.add(new TradeOffer(priceItemOne, item, 1, neededExpToLevel, 0.0F));
+        }
+      }
     }
 
     // We are basically replacing fillRecipes(), so always cancel

@@ -17,7 +17,7 @@ import net.minecraft.village.VillagerProfession;
 import net.minecraft.village.VillagerType;
 
 public class TradeFactories {
-  public static final Map<VillagerProfession, Map<VillagerType, Enchantment[]>> PROFESSION_BIOME_TRADES = new HashMap<VillagerProfession, Map<VillagerType, Enchantment[]>>(){{
+  public static Map<VillagerProfession, Map<VillagerType, Enchantment[]>> PROFESSION_BIOME_TRADES = new HashMap<VillagerProfession, Map<VillagerType, Enchantment[]>>(){{
     put(VillagerProfession.LIBRARIAN, new HashMap<VillagerType, Enchantment[]>() {{
       put(VillagerType.DESERT, new Enchantment[]{
         Enchantments.BLAST_PROTECTION,
