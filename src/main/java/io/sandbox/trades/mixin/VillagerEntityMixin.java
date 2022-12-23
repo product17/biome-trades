@@ -21,10 +21,12 @@ import io.sandbox.trades.Main;
 import io.sandbox.trades.TradeFactories;
 import io.sandbox.trades.configs.BiomeTradeConfig;
 import io.sandbox.trades.configs.CostItem;
-import io.sandbox.trades.configs.LevelCostConfig;
+import io.sandbox.trades.configs.CostConfig;
 import io.sandbox.trades.configs.VillagerConfig;
+import io.sandbox.trades.items.Blueprint;
 import io.sandbox.trades.items.IncreaseLevel;
 import io.sandbox.trades.items.ItemLoader;
+import io.sandbox.trades.professions.ProfessionLoader;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnchantmentHelper;
@@ -34,13 +36,18 @@ import net.minecraft.entity.SpawnReason;
 import net.minecraft.entity.passive.MerchantEntity;
 import net.minecraft.entity.passive.PassiveEntity;
 import net.minecraft.entity.passive.VillagerEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.BookItem;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.registry.Registry;
 import net.minecraft.village.TradeOffer;
 import net.minecraft.village.TradeOfferList;
 import net.minecraft.village.TradeOffers;
@@ -54,6 +61,7 @@ import net.minecraft.world.World;
 @Mixin(VillagerEntity.class)
 public abstract class VillagerEntityMixin extends MerchantEntity implements VillagerDataContainer {
   @Shadow public abstract VillagerData getVillagerData();
+  // @Shadow public abstract void onSellingItem(ItemStack stack);
   @Shadow private void sayNo(){};
 
   public BlockPos spawnPos;
@@ -67,6 +75,101 @@ public abstract class VillagerEntityMixin extends MerchantEntity implements Vill
   public VillagerEntityMixin(EntityType<? extends MerchantEntity> entityType, World world) {
     super(entityType, world);
     throw new IllegalStateException("VillagerEntityMixin's dummy constructor called!");
+  }
+
+  @Inject(method = "afterUsing", at = @At("HEAD"))
+  private void afterUsing(TradeOffer offer, CallbackInfo cbi) {
+    PlayerEntity player = this.getCustomer();
+    ItemStack itemStack = player.currentScreenHandler.getCursorStack();
+    VillagerData villagerData = this.getVillagerData();
+    if (itemStack.getItem() instanceof Blueprint) {
+      String blueprintItemName = itemStack.getNbt().getString(Blueprint.itemType);
+      itemStack.setCount(0);
+      player.currentScreenHandler.close(player);
+
+      // Refresh offers for Researcher
+      this.refreshResearchOffers(blueprintItemName, villagerData, null);
+    }
+
+    if (itemStack.getItem() instanceof BookItem && villagerData.getProfession() == ProfessionLoader.RESEARCHER) {
+      itemStack.setCount(0);
+      player.currentScreenHandler.close(player);
+
+      this.refreshResearchOffers(null, villagerData, itemStack);
+    }
+
+    if (itemStack.getItem() instanceof IncreaseLevel) {
+      itemStack.setCount(0);
+      player.currentScreenHandler.close(player);
+    }
+  }
+
+  private void refreshResearchOffers(String blueprintItemName, VillagerData villagerData, ItemStack researchedBook) {
+    // Remove all trades
+    TradeOfferList offerList = this.getOffers();
+    if (offerList.size() == 0) {
+      return;
+    }
+
+    VillagerConfig villagerConfig = Main.tradesConfig.getVillagerConfig(villagerData.getProfession().toString());
+    ItemStack enchantBook = null;
+    if (blueprintItemName == null) {
+      enchantBook = offerList.get(0).getSellItem().copy();
+      blueprintItemName = enchantBook.getOrCreateNbt().getString(Blueprint.itemType);
+    }
+
+    offerList.clear();
+    ItemStack researchTome = enchantBook != null ? enchantBook : new ItemStack(Items.ENCHANTED_BOOK);
+    researchTome.setCustomName(Text.translatable("item.sandbox-trades.research_project"));
+    NbtCompound nbt = researchTome.getOrCreateNbt();
+    nbt.putString(Blueprint.itemType, blueprintItemName);
+    nbt.putInt("CustomModelData", 1); // Adds the texture
+    researchTome.setNbt(nbt);
+
+    if (researchedBook != null) {
+      EnchantmentHelper.set(EnchantmentHelper.get(researchedBook), researchTome);
+    }
+
+    if (
+      villagerConfig != null &&
+      villagerConfig.researcherTomePrice != null &&
+      villagerConfig.researcherTomePrice.itemOne != null // itemOne is required
+    ) {
+      CostConfig costConfig = villagerConfig.researcherTomePrice;
+      ItemStack buyItemOne = Blueprint.getTomeEnchantPriceItem(costConfig.itemOne, researchTome);
+      ItemStack buyItemTwo = null;
+      if (costConfig.itemTwo != null) {
+        buyItemTwo = Blueprint.getTomeEnchantPriceItem(costConfig.itemTwo, researchTome);
+      }
+
+      if (buyItemTwo == null) {
+        offerList.add(new TradeOffer(
+          buyItemOne,
+          researchTome,
+          villagerData.getLevel(), 0, 0.0f));
+      } else {
+        offerList.add(new TradeOffer(
+          buyItemOne,
+          buyItemTwo,
+          researchTome,
+          villagerData.getLevel(), 0, 0.0f));
+      }
+    } else {
+      // Default to 56 emeralds...
+      offerList.add(new TradeOffer(
+        new ItemStack(Items.EMERALD, 56),
+        researchTome,
+        1, 0, 0.0f));
+    }
+
+    Item item = Registry.ITEM.get(new Identifier(blueprintItemName));
+    if (item != null) {
+      Blueprint.addEnchantedBookList(offerList, item.getDefaultStack(), researchTome, villagerData.getLevel(), villagerConfig);
+    }
+    // Add Enchanted book trade with NBT for the item
+    // Add Enchanted book upgrades for NBT item
+    this.addLevelUpOffer(offerList, villagerData);
+    this.setOffersFromServer(offerList);
   }
 
   @Inject(method = "writeCustomDataToNbt", at = @At("RETURN"))
@@ -200,58 +303,34 @@ public abstract class VillagerEntityMixin extends MerchantEntity implements Vill
       }
     }
 
-    if (villagerData.getProfession() != VillagerProfession.LIBRARIAN) {
-      this.fillRecipesFromPool(tradeOfferList, factorys, 2);
-    } else {
-      if (merchantLevel == 1) {
-        // Pass biome specific enchant
-        Map<VillagerType, Enchantment[]> biomeMaps = TradeFactories.PROFESSION_BIOME_TRADES.get(villagerData.getProfession());
-        VillagerConfig villagerConfig = Main.tradesConfig.getVillagerConfig(villagerData.getProfession().toString());
-        BiomeTradeConfig biomeTradeConfig = null;
-        Enchantment[] enchantList = biomeMaps.get(villagerData.getType());
-        if (villagerConfig != null) {
-          biomeTradeConfig = villagerConfig.getBiomeTradeConfig(villagerData.getType().toString());
-          if (biomeTradeConfig != null) {
-            enchantList = biomeTradeConfig.getEnchantments();
-          }
-        }
-
-        Enchantment enchant = enchantList[this.random.nextInt(enchantList.length)];
-        this.fillEnchantOffers(tradeOfferList, factorys, 2, enchant, 1);
+    if (villagerData.getProfession() == VillagerProfession.LIBRARIAN) {
+      Boolean complete = this.fillLibrarianOffers(merchantLevel, villagerData, tradeOfferList, factorys);
+      if (!complete) {
+        cb.cancel();
+      }
+    } else if (villagerData.getProfession() == ProfessionLoader.RESEARCHER) {
+      if (merchantLevel <= 1) {
+        this.fillRecipesFromPool(tradeOfferList, factorys, 15);
       } else {
-        // I think the Client calls this without data... and breaks it
-        // So let's ignore those calls
-        if (tradeOfferList.size() == 0) {
-          cb.cancel();
-          return;
-        }
-
-        // Remove any books
-        factorys = Arrays.stream(factorys).filter(factory -> {
-          TradeOffer tradeOffer = factory.create(this, this.random);
-          return tradeOffer.getSellItem().getItem() != Items.ENCHANTED_BOOK;
-        }).toArray(Factory[]::new);
-        
-        // Otherwise we we care if level 1 has a book
-        ItemStack firstTrade = tradeOfferList.get(0).getSellItem();
-        ItemStack secondTrade = tradeOfferList.get(1).getSellItem();
-        Enchantment enchant = null;
-
-        if (firstTrade.getItem() == Items.ENCHANTED_BOOK) {
-          enchant = EnchantmentHelper.get(firstTrade).keySet().iterator().next(); // just grab the first item
-        } else if (secondTrade.getItem() == Items.ENCHANTED_BOOK) {
-          enchant = EnchantmentHelper.get(secondTrade).keySet().iterator().next(); // just grab the first item
-        }
-
-        if (enchant != null) {
-          this.fillEnchantOffers(tradeOfferList, factorys, 2, enchant, merchantLevel);
-        } else {
-          this.fillRecipesFromPool(tradeOfferList, factorys, 2);
-        }
+        this.refreshResearchOffers(null, villagerData, null);
       }
 
+      // return early to prevent adding levelUp offer.
+      cb.cancel();
+      return;
+    } else {
+      this.fillRecipesFromPool(tradeOfferList, factorys, 2);
     }
 
+    this.addLevelUpOffer(tradeOfferList, villagerData);
+
+    // We are basically replacing fillRecipes(), so always cancel
+    // if it makes it this far
+    cb.cancel();
+  }
+
+  public void addLevelUpOffer(TradeOfferList tradeOfferList, VillagerData villagerData) {
+    int merchantLevel = villagerData.getLevel();
     if (merchantLevel < 5 && merchantLevel > 0) { // if not max level
       ItemStack priceItemOne = null;
       ItemStack priceItemTwo = null;
@@ -259,8 +338,8 @@ public abstract class VillagerEntityMixin extends MerchantEntity implements Vill
 
       // Check for profession price override
       VillagerConfig villagerConfig = Main.tradesConfig.getVillagerConfig(villagerData.getProfession().toString());
-      if (villagerConfig != null && villagerConfig.levelCost.length > levelCostIndex) {
-        LevelCostConfig levelCostConfig = villagerConfig.levelCost[levelCostIndex];
+      if (villagerConfig != null && villagerConfig.levelCost != null && villagerConfig.levelCost.length > levelCostIndex) {
+        CostConfig levelCostConfig = villagerConfig.levelCost[levelCostIndex];
         if (levelCostConfig != null) {
           priceItemOne = CostItem.getItemStack(levelCostConfig.itemOne);
           priceItemTwo = CostItem.getItemStack(levelCostConfig.itemTwo);
@@ -268,8 +347,8 @@ public abstract class VillagerEntityMixin extends MerchantEntity implements Vill
       }
 
       // Check for Default price in config
-      if (priceItemOne == null && Main.tradesConfig.defaultLevelCost.length > levelCostIndex) {
-        LevelCostConfig levelCostConfig = Main.tradesConfig.defaultLevelCost[levelCostIndex];
+      if (priceItemOne == null && Main.tradesConfig.defaultLevelCost != null && Main.tradesConfig.defaultLevelCost.length > levelCostIndex) {
+        CostConfig levelCostConfig = Main.tradesConfig.defaultLevelCost[levelCostIndex];
         if (levelCostConfig != null) {
           priceItemOne = CostItem.getItemStack(levelCostConfig.itemOne);
           priceItemTwo = CostItem.getItemStack(levelCostConfig.itemTwo);
@@ -279,7 +358,7 @@ public abstract class VillagerEntityMixin extends MerchantEntity implements Vill
       // if no configs are set this should just leave the profession alone
       if (priceItemOne != null) {
         ItemStack item = new ItemStack(ItemLoader.INCREASE_LEVEL);
-        item.setCustomName(Text.of("Increase Merchant Level"));
+        item.setCustomName(Text.translatable("item.sandbox-trades.increase_level"));
         // Add the trade as the last one
         int neededExpToLevel = VillagerEntityMixin.MerchExpRanges[merchantLevel - 1]; // This should not be out of range as it will not fire at level 5
         
@@ -303,10 +382,56 @@ public abstract class VillagerEntityMixin extends MerchantEntity implements Vill
         }
       }
     }
+  }
 
-    // We are basically replacing fillRecipes(), so always cancel
-    // if it makes it this far
-    cb.cancel();
+  public Boolean fillLibrarianOffers(int merchantLevel, VillagerData villagerData, TradeOfferList tradeOfferList, Factory[] factorys) {
+    if (merchantLevel == 1) {
+      // Pass biome specific enchant
+      Map<VillagerType, Enchantment[]> biomeMaps = TradeFactories.PROFESSION_BIOME_TRADES.get(villagerData.getProfession());
+      VillagerConfig villagerConfig = Main.tradesConfig.getVillagerConfig(villagerData.getProfession().toString());
+      BiomeTradeConfig biomeTradeConfig = null;
+      Enchantment[] enchantList = biomeMaps.get(villagerData.getType());
+      if (villagerConfig != null) {
+        biomeTradeConfig = villagerConfig.getBiomeTradeConfig(villagerData.getType().toString());
+        if (biomeTradeConfig != null) {
+          enchantList = biomeTradeConfig.getEnchantments();
+        }
+      }
+
+      Enchantment enchant = enchantList[this.random.nextInt(enchantList.length)];
+      this.fillEnchantOffers(tradeOfferList, factorys, 2, enchant, 1);
+    } else {
+      // I think the Client calls this without data... and breaks it
+      // So let's ignore those calls
+      if (tradeOfferList.size() == 0) {
+        return false;
+      }
+
+      // Remove any books
+      factorys = Arrays.stream(factorys).filter(factory -> {
+        TradeOffer tradeOffer = factory.create(this, this.random);
+        return tradeOffer.getSellItem().getItem() != Items.ENCHANTED_BOOK;
+      }).toArray(Factory[]::new);
+      
+      // Otherwise we we care if level 1 has a book
+      ItemStack firstTrade = tradeOfferList.get(0).getSellItem();
+      ItemStack secondTrade = tradeOfferList.get(1).getSellItem();
+      Enchantment enchant = null;
+
+      if (firstTrade.getItem() == Items.ENCHANTED_BOOK) {
+        enchant = EnchantmentHelper.get(firstTrade).keySet().iterator().next(); // just grab the first item
+      } else if (secondTrade.getItem() == Items.ENCHANTED_BOOK) {
+        enchant = EnchantmentHelper.get(secondTrade).keySet().iterator().next(); // just grab the first item
+      }
+
+      if (enchant != null) {
+        this.fillEnchantOffers(tradeOfferList, factorys, 2, enchant, merchantLevel);
+      } else {
+        this.fillRecipesFromPool(tradeOfferList, factorys, 2);
+      }
+    }
+
+    return true;
   }
 
   public void fillEnchantOffers(TradeOfferList tradeOfferList, Factory[] factorys, int count, Enchantment enchant, int merchantLevel) {
@@ -332,7 +457,7 @@ public abstract class VillagerEntityMixin extends MerchantEntity implements Vill
       ItemStack sellItem = tradeOffer.getSellItem();
       if (sellItem.getItem() == Items.ENCHANTED_BOOK) {
         addedEnchant = true;
-        this.addEnchantToOfferList(tradeOfferList, enchant, merchantLevel);
+        tradeOfferList.add(this.buildEnchantedBookOffer(enchant, merchantLevel));
       } else if (tradeOffer != null) {
         tradeOfferList.add(tradeOffer);
       }
@@ -344,11 +469,12 @@ public abstract class VillagerEntityMixin extends MerchantEntity implements Vill
         // If the 2 trades have been filled... remove the last one
         tradeOfferList.remove(tradeOfferList.size() - 1);
       }
-      this.addEnchantToOfferList(tradeOfferList, enchant, merchantLevel);
-    } 
+
+      tradeOfferList.add(this.buildEnchantedBookOffer(enchant, merchantLevel));
+    }
   }
 
-  public void addEnchantToOfferList(TradeOfferList tradeOfferList, Enchantment enchant, int merchantLevel) {
+  public TradeOffer buildEnchantedBookOffer(Enchantment enchant, int merchantLevel) {
     Integer requiredMerchantLevel = 6 - enchant.getMaxLevel();
     Integer enchantLevel = merchantLevel - requiredMerchantLevel + 1;
 
@@ -362,12 +488,11 @@ public abstract class VillagerEntityMixin extends MerchantEntity implements Vill
       if (merchantLevel == 1) {
         ItemStack item = new ItemStack(Items.FLOWER_BANNER_PATTERN);
         item.setCustomName(Text.of("Requires Merchant Level: " + requiredMerchantLevel));
-        // Add the TradeOffer directly
-        tradeOfferList.add(new TradeOffer(item, newSellItem, 0, 0, 0.0F));
+        return new TradeOffer(item, newSellItem, 0, 0, 0.0F);
       }
-    } else {
-      tradeOfferList.add(new TradeOffer(new ItemStack(Items.EMERALD, this.random.nextInt(59) + 5), new ItemStack(Items.BOOK), newSellItem, 12, 0, 0.2F));
     }
+
+    return new TradeOffer(new ItemStack(Items.EMERALD, this.random.nextInt(59) + 5), new ItemStack(Items.BOOK), newSellItem, 12, 0, 0.2F);
   }
 
   public Factory[] resizeFactoryList(Factory[] factorys, int count) {

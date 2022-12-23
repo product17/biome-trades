@@ -4,7 +4,6 @@
   "package": "io.sandbox.trades.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
-    "InventoryScreenMixin",
     "VillagerEntityMixin"
   ],
   "client": [

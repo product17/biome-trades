@@ -4,6 +4,7 @@ import io.sandbox.lib.Config;
 import io.sandbox.lib.SandboxLogger;
 import io.sandbox.trades.configs.SandboxTradesConfig;
 import io.sandbox.trades.items.ItemLoader;
+import io.sandbox.trades.professions.ProfessionLoader;
 import net.fabricmc.api.ModInitializer;
 
 public class Main implements ModInitializer {
@@ -14,6 +15,7 @@ public class Main implements ModInitializer {
 	@Override
 	public void onInitialize() {
 		ItemLoader.init();
+		ProfessionLoader.init();
 		LOGGER.info("Initialized");
 	}
 }

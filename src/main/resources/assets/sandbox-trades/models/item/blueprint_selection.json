@@ -1,0 +1,98 @@
+{
+  "parent": "item/generated",
+  "textures": {
+    "layer0": "sandbox-trades:item/bow-blueprint"
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "item": 0.1
+      },
+      "model": "sandbox-trades:item/blueprint_axe"
+    },
+    {
+      "predicate": {
+        "item": 0.11
+      },
+      "model": "sandbox-trades:item/blueprint_leggings"
+    },
+    {
+      "predicate": {
+        "item": 0.12
+      },
+      "model": "sandbox-trades:item/blueprint_pickaxe"
+    },
+    {
+      "predicate": {
+        "item": 0.13
+      },
+      "model": "sandbox-trades:item/blueprint_shears"
+    },
+    {
+      "predicate": {
+        "item": 0.14
+      },
+      "model": "sandbox-trades:item/blueprint_shovel"
+    },
+    {
+      "predicate": {
+        "item": 0.15
+      },
+      "model": "sandbox-trades:item/blueprint_sword"
+    },
+    {
+      "predicate": {
+        "item": 0.16
+      },
+      "model": "sandbox-trades:item/blueprint_trident"
+    },
+    {
+      "predicate": {
+        "item": 0.2
+      },
+      "model": "sandbox-trades:item/blueprint_boots"
+    },
+    {
+      "predicate": {
+        "item": 0.3
+      },
+      "model": "sandbox-trades:item/blueprint_bow"
+    },
+    {
+      "predicate": {
+        "item": 0.4
+      },
+      "model": "sandbox-trades:item/blueprint_chestplate"
+    },
+    {
+      "predicate": {
+        "item": 0.5
+      },
+      "model": "sandbox-trades:item/blueprint_crossbow"
+    },
+    {
+      "predicate": {
+        "item": 0.6
+      },
+      "model": "sandbox-trades:item/blueprint_elytra"
+    },
+    {
+      "predicate": {
+        "item": 0.7
+      },
+      "model": "sandbox-trades:item/blueprint_fishing_rod"
+    },
+    {
+      "predicate": {
+        "item": 0.8
+      },
+      "model": "sandbox-trades:item/blueprint_helm"
+    },
+    {
+      "predicate": {
+        "item": 0.9
+      },
+      "model": "sandbox-trades:item/blueprint_hoe"
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 package io.sandbox.trades.configs;
 
 public class SandboxTradesConfig {
-  public LevelCostConfig[] defaultLevelCost;
+  public CostConfig[] defaultLevelCost;
   public VillagerConfig[] villagerConfigs;
 
   public VillagerConfig getVillagerConfig(String profession) {

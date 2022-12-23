@@ -1,0 +1,98 @@
+{
+  "parent": "item/generated",
+  "textures": {
+    "layer0": "sandbox-trades:item/boots-blueprint"
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "enchant_item": 0.1
+      },
+      "model": "sandbox-trades:item/blueprint_axe"
+    },
+    {
+      "predicate": {
+        "enchant_item": 0.11
+      },
+      "model": "sandbox-trades:item/blueprint_leggings"
+    },
+    {
+      "predicate": {
+        "enchant_item": 0.12
+      },
+      "model": "sandbox-trades:item/blueprint_pickaxe"
+    },
+    {
+      "predicate": {
+        "enchant_item": 0.13
+      },
+      "model": "sandbox-trades:item/blueprint_shears"
+    },
+    {
+      "predicate": {
+        "enchant_item": 0.14
+      },
+      "model": "sandbox-trades:item/blueprint_shovel"
+    },
+    {
+      "predicate": {
+        "enchant_item": 0.15
+      },
+      "model": "sandbox-trades:item/blueprint_sword"
+    },
+    {
+      "predicate": {
+        "enchant_item": 0.16
+      },
+      "model": "sandbox-trades:item/blueprint_trident"
+    },
+    {
+      "predicate": {
+        "enchant_item": 0.2
+      },
+      "model": "sandbox-trades:item/blueprint_boots"
+    },
+    {
+      "predicate": {
+        "enchant_item": 0.3
+      },
+      "model": "sandbox-trades:item/blueprint_bow"
+    },
+    {
+      "predicate": {
+        "enchant_item": 0.4
+      },
+      "model": "sandbox-trades:item/blueprint_chestplate"
+    },
+    {
+      "predicate": {
+        "enchant_item": 0.5
+      },
+      "model": "sandbox-trades:item/blueprint_crossbow"
+    },
+    {
+      "predicate": {
+        "enchant_item": 0.6
+      },
+      "model": "sandbox-trades:item/blueprint_elytra"
+    },
+    {
+      "predicate": {
+        "enchant_item": 0.7
+      },
+      "model": "sandbox-trades:item/blueprint_fishing_rod"
+    },
+    {
+      "predicate": {
+        "enchant_item": 0.8
+      },
+      "model": "sandbox-trades:item/blueprint_helm"
+    },
+    {
+      "predicate": {
+        "enchant_item": 0.9
+      },
+      "model": "sandbox-trades:item/blueprint_hoe"
+    }
+  ]
+}

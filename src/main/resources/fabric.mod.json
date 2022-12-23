@@ -19,6 +19,9 @@
 
   "environment": "*",
   "entrypoints": {
+    "client": [
+      "io.sandbox.trades.MainClient"
+    ],
     "main": [
       "io.sandbox.trades.Main"
     ]
