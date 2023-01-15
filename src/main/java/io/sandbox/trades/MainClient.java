@@ -3,8 +3,6 @@ package io.sandbox.trades;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.google.common.collect.ImmutableMap;
-
 import io.sandbox.trades.items.ItemLoader;
 import net.fabricmc.api.ClientModInitializer;
 import net.minecraft.client.item.ModelPredicateProviderRegistry;

@@ -7,10 +7,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 
-import io.sandbox.equipment.Main;
-import io.sandbox.trades.configs.CostConfig;
 import io.sandbox.trades.configs.CostItem;
 import io.sandbox.trades.configs.VillagerConfig;
 import net.minecraft.client.item.TooltipContext;
@@ -18,7 +16,6 @@ import net.minecraft.enchantment.DamageEnchantment;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.enchantment.ProtectionEnchantment;
-import net.minecraft.item.EnchantedBookItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -69,7 +66,7 @@ public class Blueprint extends Item {
   }
 
   private static Boolean isEnchantCompatible(Collection<Enchantment> existingEnchants, Enchantment enchantToAdd) {
-    Iterator var2 = existingEnchants.iterator();
+    Iterator<Enchantment> var2 = existingEnchants.iterator();
 
     Enchantment enchantment;
     do {

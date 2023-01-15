@@ -412,16 +412,15 @@ public abstract class VillagerEntityMixin extends MerchantEntity implements Vill
         TradeOffer tradeOffer = factory.create(this, this.random);
         return tradeOffer.getSellItem().getItem() != Items.ENCHANTED_BOOK;
       }).toArray(Factory[]::new);
-      
-      // Otherwise we we care if level 1 has a book
-      ItemStack firstTrade = tradeOfferList.get(0).getSellItem();
-      ItemStack secondTrade = tradeOfferList.get(1).getSellItem();
-      Enchantment enchant = null;
 
-      if (firstTrade.getItem() == Items.ENCHANTED_BOOK) {
-        enchant = EnchantmentHelper.get(firstTrade).keySet().iterator().next(); // just grab the first item
-      } else if (secondTrade.getItem() == Items.ENCHANTED_BOOK) {
-        enchant = EnchantmentHelper.get(secondTrade).keySet().iterator().next(); // just grab the first item
+      Enchantment enchant = null;
+      var listIterator = tradeOfferList.listIterator();
+      while (listIterator.hasNext()) {
+        ItemStack sellItem = listIterator.next().getSellItem();
+        if (sellItem.getItem() == Items.ENCHANTED_BOOK) {
+          // Check for existing enchant and upgrade if needed
+          enchant = EnchantmentHelper.get(sellItem).keySet().iterator().next();
+        }
       }
 
       if (enchant != null) {
@@ -463,14 +462,16 @@ public abstract class VillagerEntityMixin extends MerchantEntity implements Vill
       }
     }
 
-    // If the level does not have an enchant book
+    // If the level did not add an enchant book
+    // add it as additional Offer
     if (shouldAddEnchant && !addedEnchant) {
-      if (tradeOfferList.size() % 2 == 0) {
-        // If the 2 trades have been filled... remove the last one
-        tradeOfferList.remove(tradeOfferList.size() - 1);
-      }
-
       tradeOfferList.add(this.buildEnchantedBookOffer(enchant, merchantLevel));
+    }
+
+    if (shouldAddEnchant) {
+      tradeOfferList.removeIf((trade) -> {
+        return trade.getOriginalFirstBuyItem().getItem().equals(Items.FLOWER_BANNER_PATTERN);
+      });
     }
   }
 
