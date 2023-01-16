@@ -5,9 +5,11 @@ public class SandboxTradesConfig {
   public VillagerConfig[] villagerConfigs;
 
   public VillagerConfig getVillagerConfig(String profession) {
-    for (VillagerConfig config : this.villagerConfigs) {
-      if (config.type.equals(profession)) {
-        return config;
+    if (this.villagerConfigs != null) {
+      for (VillagerConfig config : this.villagerConfigs) {
+        if (config.type.equals(profession)) {
+          return config;
+        }
       }
     }
 

@@ -98,7 +98,13 @@ public class Blueprint extends Item {
     return enchantment.canCombine(enchantToAdd);
   }
 
-  public static void addEnchantedBookList(TradeOfferList offerList, ItemStack itemStack, ItemStack mainEnchantBook, int merchantLevel, VillagerConfig config) {
+  public static void addEnchantedBookList(
+    TradeOfferList offerList,
+    ItemStack itemStack,
+    ItemStack mainEnchantBook,
+    int merchantLevel,
+    VillagerConfig config
+  ) {
     Map<Enchantment, Integer> mainBookEnchants = EnchantmentHelper.get(mainEnchantBook);
     List<Enchantment> enchants = Blueprint.getEnchantmentList(itemStack, mainBookEnchants);
     for(Enchantment enchantment : enchants) {
@@ -109,7 +115,12 @@ public class Blueprint extends Item {
     }
   }
 
-  public static TradeOffer buildEnchantedBookOffer(Enchantment enchant, int merchantLevel, Map<Enchantment, Integer> mainBookEnchants, VillagerConfig config) {
+  public static TradeOffer buildEnchantedBookOffer(
+    Enchantment enchant,
+    int merchantLevel,
+    Map<Enchantment, Integer> mainBookEnchants,
+    VillagerConfig config
+  ) {
     Integer requiredMerchantLevel = 6 - enchant.getMaxLevel();
     Integer enchantLevel = merchantLevel - requiredMerchantLevel + 1;
 
@@ -137,7 +148,11 @@ public class Blueprint extends Item {
     }}, enchantBookBuyItem);
 
     ItemStack buyItemOne = new ItemStack(Items.EMERALD, calcMultiplierPrice(enchant, enchantLevel, mainBookEnchants));
-    if (config.researcherResearchItemPrice != null && config.researcherResearchItemPrice.itemOne != null) {
+    if (
+      config != null &&
+      config.researcherResearchItemPrice != null &&
+      config.researcherResearchItemPrice.itemOne != null
+    ) {
       CostItem costItem = config.researcherResearchItemPrice.itemOne;
       if (costItem.item != null) {
         Item item = Registries.ITEM.get(new Identifier(config.researcherResearchItemPrice.itemOne.item));
