@@ -1,5 +1,5 @@
 plugins {
-	id 'fabric-loom' version '0.12-SNAPSHOT' // FABRIC UPGRADE REFERENCE https://fabricmc.net/develop/
+	id 'fabric-loom' version '1.0-SNAPSHOT' // FABRIC UPGRADE REFERENCE https://fabricmc.net/develop/
 	id 'maven-publish'
 }
 
@@ -30,10 +30,10 @@ dependencies {
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
-	modImplementation "io.sandbox.lib:sandbox-lib-1.19.2+2022-09-27r8"
+	modImplementation "io.sandbox.lib:sandbox-lib-${project.sandbox_lib_version}"
 
 	// This is strictly for testing the dev build compatability
-	modImplementation "io.sandbox.equipment:sandbox-equipment-1.19.2+2022-09-28r1"
+	modImplementation "io.sandbox.equipment:sandbox-equipment-${project.sandbox_equipment_version}"
 }
 
 processResources {

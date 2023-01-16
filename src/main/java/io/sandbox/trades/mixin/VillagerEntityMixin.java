@@ -42,12 +42,12 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.registry.Registries;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.registry.Registry;
 import net.minecraft.village.TradeOffer;
 import net.minecraft.village.TradeOfferList;
 import net.minecraft.village.TradeOffers;
@@ -162,7 +162,7 @@ public abstract class VillagerEntityMixin extends MerchantEntity implements Vill
         1, 0, 0.0f));
     }
 
-    Item item = Registry.ITEM.get(new Identifier(blueprintItemName));
+    Item item = Registries.ITEM.get(new Identifier(blueprintItemName));
     if (item != null) {
       Blueprint.addEnchantedBookList(offerList, item.getDefaultStack(), researchTome, villagerData.getLevel(), villagerConfig);
     }

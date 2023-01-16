@@ -3,8 +3,8 @@ package io.sandbox.trades.configs;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.registry.Registries;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.registry.Registry;
 
 public class CostItem {
   public String costProcessor;
@@ -18,7 +18,7 @@ public class CostItem {
       return null;
     }
 
-    Item checkedItem = Registry.ITEM.get(new Identifier(costItem.item));
+    Item checkedItem = Registries.ITEM.get(new Identifier(costItem.item));
     if (checkedItem.equals(Items.AIR)) {
       return null;
     }
@@ -34,7 +34,7 @@ public class CostItem {
       return null;
     }
 
-    Item checkedItem = Registry.ITEM.get(new Identifier(costItem.itemTierTwo));
+    Item checkedItem = Registries.ITEM.get(new Identifier(costItem.itemTierTwo));
     if (checkedItem.equals(Items.AIR)) {
       return null;
     }

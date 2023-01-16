@@ -7,7 +7,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 import io.sandbox.trades.configs.CostItem;
 import io.sandbox.trades.configs.VillagerConfig;
@@ -20,10 +20,10 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.registry.Registries;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.random.Random;
-import net.minecraft.util.registry.Registry;
 import net.minecraft.village.TradeOffer;
 import net.minecraft.village.TradeOfferList;
 import net.minecraft.world.World;
@@ -47,7 +47,7 @@ public class Blueprint extends Item {
 
   public static List<Enchantment> getEnchantmentList(ItemStack itemStack, Map<Enchantment, Integer> mainBookEnchants) {
     List<Enchantment> enchantments = new ArrayList<>();
-    Iterator<Enchantment> enchanIterator = Registry.ENCHANTMENT.iterator();
+    Iterator<Enchantment> enchanIterator = Registries.ENCHANTMENT.iterator();
     Collection<Enchantment> existingEnchants = mainBookEnchants.keySet();
     while (enchanIterator.hasNext()) {
       Enchantment enchant = enchanIterator.next();
@@ -140,7 +140,7 @@ public class Blueprint extends Item {
     if (config.researcherResearchItemPrice != null && config.researcherResearchItemPrice.itemOne != null) {
       CostItem costItem = config.researcherResearchItemPrice.itemOne;
       if (costItem.item != null) {
-        Item item = Registry.ITEM.get(new Identifier(config.researcherResearchItemPrice.itemOne.item));
+        Item item = Registries.ITEM.get(new Identifier(config.researcherResearchItemPrice.itemOne.item));
         int cost = costItem.count;
         if (costItem.costProcessor != null) {
           switch (costItem.costProcessor) {

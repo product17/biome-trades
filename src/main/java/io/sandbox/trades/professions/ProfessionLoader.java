@@ -16,9 +16,11 @@ import net.minecraft.block.Blocks;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.registry.Registries;
+import net.minecraft.registry.Registry;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.RegistryKeys;
 import net.minecraft.sound.SoundEvents;
-import net.minecraft.util.registry.Registry;
-import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.village.TradeOffer;
 import net.minecraft.village.VillagerProfession;
 import net.minecraft.world.poi.PointOfInterestType;
@@ -26,7 +28,7 @@ import net.minecraft.world.poi.PointOfInterestType;
 public class ProfessionLoader {
   public static final PointOfInterestType RESEARCHER_POI = registerPoi("researcher_poi", Blocks.ENCHANTING_TABLE);
   public static final VillagerProfession RESEARCHER = registerProfession("researcher",
-      RegistryKey.of(Registry.POINT_OF_INTEREST_TYPE_KEY, Util.id("researcher_poi")));
+      RegistryKey.of(RegistryKeys.POINT_OF_INTEREST_TYPE, Util.id("researcher_poi")));
   
   public static final Item[] blueprintItems = {
     Items.DIAMOND_HELMET,
@@ -47,7 +49,7 @@ public class ProfessionLoader {
   };
 
   public static VillagerProfession registerProfession(String name, RegistryKey<PointOfInterestType> type) {
-    return Registry.register(Registry.VILLAGER_PROFESSION, Util.id(name),
+    return Registry.register(Registries.VILLAGER_PROFESSION, Util.id(name),
         VillagerProfessionBuilder.create().id(Util.id(name)).workstation(type)
             .workSound(SoundEvents.ENTITY_VILLAGER_WORK_ARMORER).build());
   }
